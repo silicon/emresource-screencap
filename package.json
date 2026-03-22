@@ -1,0 +1,19 @@
+{
+  "name": "emresource-screencap",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EMResource login and full-page screenshot via Ulixee Hero",
+  "type": "module",
+  "bin": {
+    "emresource-scrape": "./cli.mjs"
+  },
+  "scripts": {
+    "start": "node cli.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@ulixee/hero-playground": "2.0.0-alpha.34"
+  }
+}
