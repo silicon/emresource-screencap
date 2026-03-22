@@ -1,6 +1,6 @@
 # emresource-screencap
 
-Small CLI that drives Chromium with [Ulixee Hero](https://ulixee.org) to sign in to [EMResource](https://emresource.juvare.com) (Okta/Juvare flow), optionally pick a region when that UI appears, and save a **full-page** screenshot (PNG, JPEG, or WebP).
+Small CLI that drives Chromium with [Ulixee Hero](https://ulixee.org) to sign in to [EMResource](https://emresource.juvare.com) (Okta/Juvare flow), optionally pick a region when that UI appears, and save a **full-page** screenshot (PNG, JPEG, or WebP). The browser uses a **large default viewport** (1920×1200) so layouts and tables have room to render before capture; override with `EMRESOURCE_VIEWPORT` if needed.
 
 ## Requirements
 
@@ -23,6 +23,7 @@ Set credentials in the environment (never commit them):
 |----------|----------|---------|
 | `EMRESOURCE_USERNAME` | Yes | Account email or username |
 | `EMRESOURCE_PASSWORD` | Yes | Account password |
+| `EMRESOURCE_VIEWPORT` | No | Browser viewport `WIDTHxHEIGHT` (e.g. `2560x1440`). Default is `1920x1200`. |
 
 ## Usage
 

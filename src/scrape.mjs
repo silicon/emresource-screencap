@@ -3,7 +3,21 @@ import { dirname, resolve } from "node:path";
 
 import Hero from "@ulixee/hero-playground";
 
-import { clickVisibleNextIfAny, runLoginFlow } from "./flow.mjs";
+import { DEFAULT_VIEWPORT } from "./constants.mjs";
+import { runLoginFlow } from "./flow.mjs";
+
+function resolveViewport() {
+  const raw = process.env.EMRESOURCE_VIEWPORT?.trim();
+  if (!raw) return DEFAULT_VIEWPORT;
+  const m = /^(\d+)\s*[xX]\s*(\d+)$/.exec(raw);
+  if (!m) return DEFAULT_VIEWPORT;
+  const width = Number(m[1]);
+  const height = Number(m[2]);
+  if (width < 800 || height < 600 || width > 7680 || height > 4320) {
+    return DEFAULT_VIEWPORT;
+  }
+  return { ...DEFAULT_VIEWPORT, width, height };
+}
 
 function screenshotOptionsForPath(outputPath) {
   const lower = outputPath.toLowerCase();
@@ -57,6 +71,7 @@ export async function runScrape(options) {
   const hero = new Hero({
     showChrome: headed,
     showChromeInteractions: headed,
+    viewport: resolveViewport(),
   });
 
   try {

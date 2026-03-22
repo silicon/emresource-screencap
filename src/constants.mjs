@@ -1,5 +1,11 @@
 export const BASE_URL = "https://emresource.juvare.com";
 
+export const DEFAULT_VIEWPORT = {
+  width: 1920,
+  height: 1200,
+  deviceScaleFactor: 1,
+};
+
 export const USERNAME_SELECTORS = [
   'input[name="identifier"]',
   'input[autocomplete="identifier"]',
