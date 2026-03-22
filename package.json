@@ -5,7 +5,7 @@
   "description": "EMResource login and full-page screenshot via Ulixee Hero",
   "type": "module",
   "bin": {
-    "emresource-scrape": "./cli.mjs"
+    "emresource-screencap": "./cli.mjs"
   },
   "scripts": {
     "start": "node cli.mjs",

@@ -62,7 +62,7 @@ With a global link from the repo root:
 
 ```bash
 npm link
-emresource-scrape -o dashboard.png
+emresource-screencap -o dashboard.png
 ```
 
 Useful flags (see `node cli.mjs --help`):

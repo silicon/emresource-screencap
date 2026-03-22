@@ -205,7 +205,7 @@ async function selectRegionAndClickNext(hero, region, maxWaitMs) {
   const control = await waitForRegionControl(hero, maxWaitMs);
   if (!control) {
     console.error(
-      "emresource-scrape: Region control not visible (select / combobox / listbox).",
+      "emresource-screencap: Region control not visible (select / combobox / listbox).",
     );
     return false;
   }
@@ -224,7 +224,7 @@ async function selectRegionAndClickNext(hero, region, maxWaitMs) {
     xpathOptionMatchingRegion(region),
   );
   if (!opt) {
-    console.error("emresource-scrape: Could not find region option:", region);
+    console.error("emresource-screencap: Could not find region option:", region);
     return false;
   }
   try {
@@ -319,7 +319,7 @@ async function submitIdentifierStep(hero, userEl) {
   }
 
   console.log(
-    "emresource-scrape: identifier step did not reach password field; check hCaptcha or UI state",
+    "emresource-screencap: identifier step did not reach password field; check hCaptcha or UI state",
   );
 }
 
@@ -381,7 +381,7 @@ export async function runLoginFlow(hero, options) {
 
   let userEl = await waitForUsernameField(hero, 20_000);
   if (!userEl) {
-    console.log("emresource-scrape: trying Log In to reveal form…");
+    console.log("emresource-screencap: trying Log In to reveal form…");
     await tryClickLogIn(hero);
     userEl = await waitForUsernameField(hero, 25_000);
   }
@@ -429,7 +429,7 @@ export async function runLoginFlow(hero, options) {
         );
       }
       console.error(
-        "emresource-scrape: region UI not found or selection incomplete; continuing " +
+        "emresource-screencap: region UI not found or selection incomplete; continuing " +
           "(use --require-region to fail, --skip-region to skip waiting).",
       );
     }

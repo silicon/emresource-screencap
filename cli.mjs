@@ -27,7 +27,7 @@ const { values } = parseArgs({
 });
 
 if (values.help) {
-  console.log(`emresource-scrape — EMResource login + full-page screenshot (Ulixee Hero)
+  console.log(`emresource-screencap — EMResource login + full-page screenshot (Ulixee Hero)
 
 Environment:
   EMRESOURCE_USERNAME   Account email or username (required)
@@ -59,7 +59,7 @@ const timeoutMs = Number.parseInt(values["timeout-ms"], 10) || 60_000;
       requireRegion: values["require-region"],
       skipRegion: values["skip-region"],
     });
-    console.log("emresource-scrape: saved", out);
+    console.log("emresource-screencap: saved", out);
   } catch (err) {
     console.error(err?.message ?? err);
     process.exit(2);
