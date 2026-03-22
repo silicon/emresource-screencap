@@ -8,7 +8,9 @@
     "emresource-scrape": "./cli.mjs"
   },
   "scripts": {
-    "start": "node cli.mjs"
+    "start": "node cli.mjs",
+    "test": "node --test test/cli.e2e.test.mjs test/scrapeOptions.test.mjs",
+    "test:e2e": "node --test test/hero.flow.test.mjs"
   },
   "engines": {
     "node": ">=18"

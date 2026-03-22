@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixture login</title>
+  </head>
+  <body>
+    <div id="login">
+      <form id="identifier-form" action="#" method="get">
+        <input name="identifier" autocomplete="identifier" />
+        <input type="submit" value="Next" />
+      </form>
+      <form id="password-form" action="#" method="get">
+        <input
+          type="password"
+          name="password"
+          autocomplete="current-password"
+        />
+        <button type="button" id="verify-btn">Verify</button>
+      </form>
+    </div>
+    <div id="dash" style="display: none; min-height: 2400px">
+      <table border="1">
+        <tr>
+          <td>Fixture dashboard</td>
+        </tr>
+      </table>
+    </div>
+    <script>
+      document.getElementById("verify-btn").addEventListener("click", function () {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("dash").style.display = "block";
+      });
+    </script>
+  </body>
+</html>

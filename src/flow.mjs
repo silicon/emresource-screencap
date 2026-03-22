@@ -372,9 +372,10 @@ export async function runLoginFlow(hero, options) {
     skipRegion,
     requireRegion,
     timeoutMs,
+    baseUrl = BASE_URL,
   } = options;
 
-  await hero.goto(BASE_URL, { timeoutMs: Math.max(timeoutMs, 120_000) });
+  await hero.goto(baseUrl, { timeoutMs: Math.max(timeoutMs, 120_000) });
   await hero.waitForPaintingStable();
   await hero.waitForMillis(800);
 

@@ -24,6 +24,23 @@ Set credentials in the environment (never commit them):
 | `EMRESOURCE_USERNAME` | Yes | Account email or username |
 | `EMRESOURCE_PASSWORD` | Yes | Account password |
 | `EMRESOURCE_VIEWPORT` | No | Browser viewport `WIDTHxHEIGHT` (e.g. `2560x1440`). Default is `1920x1200`. |
+| `EMRESOURCE_BASE_URL` | No | Override the login URL (defaults to production). Used by tests and scripts; programmatic `runScrape({ baseUrl })` wins over this env var when set. |
+
+## Testing
+
+Fast checks (CLI subprocess smoke tests and pure helper unit tests; no browser):
+
+```bash
+npm test
+```
+
+Hero integration test against a local HTTP fixture (starts Chromium via Ulixee Hero; slower):
+
+```bash
+npm run test:e2e
+```
+
+On **Linux CI** (e.g. Ubuntu), ensure Chromium/OS libraries Hero needs are installed—the same system packages you use for Puppeteer/Playwright Chromium often apply. Run Hero tests **serialized** (one process) if you see core conflicts. **macOS** often works without extra setup.
 
 ## Usage
 
