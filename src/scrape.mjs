@@ -42,13 +42,13 @@ export async function runScrape(options) {
   const out = resolveOutputPath(outputPath);
   await mkdir(dirname(out), { recursive: true });
 
-  const hero = new Hero({
-    showChrome: headed,
-    showChromeInteractions: headed,
-    viewport: resolveViewport(),
-  });
-
+  let hero;
   try {
+    hero = new Hero({
+      showChrome: headed,
+      showChromeInteractions: headed,
+      viewport: resolveViewport(),
+    });
     await runLoginFlow(hero, {
       username,
       password,
@@ -69,8 +69,10 @@ export async function runScrape(options) {
     await writeFile(out, buf);
     return out;
   } finally {
-    try {
-      await hero.close();
-    } catch {}
+    if (hero) {
+      try {
+        await hero.close();
+      } catch {}
+    }
   }
 }

@@ -9,12 +9,22 @@ export const DEFAULT_VIEWPORT = {
 export const USERNAME_SELECTORS = [
   'input[name="identifier"]',
   'input[autocomplete="identifier"]',
+  'input[autocomplete="username"]',
+  'input[autocomplete="email"]',
+  "#okta-signin-username",
+  'input[name="username"]',
+  'input[name="userName"]',
   "#input27",
   'input[type="email"]',
   'input[name="email"]',
   "#email",
   'input[name="loginName"]',
   "#username",
+  '[data-se="identifier"]',
+  'input[placeholder="Email"]',
+  'input[placeholder="Username"]',
+  'input[aria-label="Email"]',
+  'input[aria-label="Username"]',
 ];
 
 export const NEXT_SELECTORS = [

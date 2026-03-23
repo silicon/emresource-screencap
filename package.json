@@ -16,6 +16,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@ulixee/chrome-139-0": "7258.155.11",
     "@ulixee/hero-playground": "2.0.0-alpha.34"
   }
 }

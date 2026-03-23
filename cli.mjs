@@ -38,7 +38,7 @@ Options:
   --region LABEL        Region when that UI appears (default: Central AZ)
   --require-region      Fail if no region control appears in time
   --skip-region         Do not wait for region selection
-  --headed              Show the browser window
+  --headed              Show the browser (needed to complete hCaptcha/CAPTCHA manually)
   --timeout-ms MS       Default Hero timeout (default: 60000)
   -h, --help            Show this help
 `);

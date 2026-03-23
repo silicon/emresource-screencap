@@ -8,6 +8,15 @@ import {
   USERNAME_SELECTORS,
 } from "./constants.mjs";
 
+async function waitPaintingStableLenient(hero, budgetMs) {
+  const ms = Math.min(Math.max(20_000, budgetMs), 180_000);
+  try {
+    await hero.waitForPaintingStable({ timeoutMs: ms });
+  } catch {
+    await hero.waitForMillis(600);
+  }
+}
+
 export async function scrollThenClick(hero, el) {
   const ready = await hero.waitForElement(el, {
     waitForVisible: true,
@@ -66,6 +75,60 @@ const XPATH_NEXT_CASE_INSENSITIVE =
   "//input[(@type='submit' or @type='button') and " +
   "translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='next']";
 
+const XPATH_OAUTH_USERNAME_SEMANTIC =
+  "//input[(" +
+  "@type='email' or @type='text' or @type='tel' or normalize-space(@type)=''" +
+  ") and not(@type='hidden') and not(@type='password') and not(@type='search') and " +
+  "not(@type='submit') and not(@type='button')][ " +
+  "@autocomplete='username' or @autocomplete='email' or @autocomplete='identifier' or " +
+  "contains(translate(@name,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'user') or " +
+  "contains(translate(@name,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'email') or " +
+  "contains(translate(@name,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'login') or " +
+  "contains(translate(@name,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'ident') or " +
+  "contains(translate(@id,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'user') or " +
+  "contains(translate(@id,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'email') or " +
+  "contains(translate(@id,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'login') or " +
+  "contains(translate(@id,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'ident') or " +
+  "contains(translate(@placeholder,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'email') or " +
+  "contains(translate(@placeholder,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'user') or " +
+  "contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'email') or " +
+  "contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'username')" +
+  "]";
+
+const XPATH_EMAIL_FIELD_WAIT =
+  "//input[@type='email'] | " +
+  "//input[contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'email')] | " +
+  "//input[contains(translate(@placeholder,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'email')]";
+
+const XPATH_NEXT_AFTER_IDENTIFIER_INPUT =
+  "(//input[@type='email' or @name='identifier' or @autocomplete='identifier' or @id='okta-signin-username' or @name='username'])[1]/" +
+  "following::button[contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'next')][1] | " +
+  "(//input[@type='email' or @name='identifier'])[1]/" +
+  "following::input[(@type='submit' or @type='button') and contains(translate(@value,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'next')][1]";
+
+async function tryWaitFirstMatchingInput(hero, xpath, timeoutMs) {
+  const frames = await hero.frameEnvironments;
+  for (const frame of frames) {
+    let nodes;
+    try {
+      nodes = await frame.xpathSelectorAll(xpath);
+    } catch {
+      continue;
+    }
+    for (const el of nodes) {
+      try {
+        const ready = await hero.waitForElement(el, {
+          waitForVisible: true,
+          waitForClickable: false,
+          timeoutMs,
+        });
+        if (ready) return ready;
+      } catch {}
+    }
+  }
+  return null;
+}
+
 async function firstVisibleXPathInFrames(hero, xpath) {
   const frames = await hero.frameEnvironments;
   for (const frame of frames) {
@@ -95,26 +158,31 @@ async function tryClickExactLabel(hero, label) {
 }
 
 async function findSubmitInIdentifierForm(hero) {
-  const xpath =
-    "//input[@name='identifier' or @autocomplete='identifier']/ancestor::form[1]" +
-    "//*[self::button or self::input[@type='submit']]";
+  const formXpath =
+    "//input[@name='identifier' or @autocomplete='identifier' or @name='username' or " +
+    "@name='userName' or @id='okta-signin-username' or @type='email']/ancestor::form[1]" +
+    "//*[self::button or self::input[@type='submit' or @type='button']]";
+
   const frames = await hero.frameEnvironments;
-  let fallback = null;
-  for (const frame of frames) {
-    try {
-      const nodes = await frame.xpathSelectorAll(xpath);
-      for (const el of nodes) {
-        if (!(await hero.isElementVisible(el))) continue;
-        if (!fallback) fallback = el;
-        try {
-          if (await el.$isClickable) return el;
-        } catch {
-          return el;
+  for (const xpath of [formXpath, XPATH_NEXT_AFTER_IDENTIFIER_INPUT]) {
+    let fallback = null;
+    for (const frame of frames) {
+      try {
+        const nodes = await frame.xpathSelectorAll(xpath);
+        for (const el of nodes) {
+          if (!(await hero.isElementVisible(el))) continue;
+          if (!fallback) fallback = el;
+          try {
+            if (await el.$isClickable) return el;
+          } catch {
+            return el;
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
+    if (fallback) return fallback;
   }
-  return fallback;
+  return null;
 }
 
 async function findNextButton(hero) {
@@ -212,7 +280,7 @@ async function selectRegionAndClickNext(hero, region, maxWaitMs) {
 
   if (await trySelectNativeRegion(hero, region)) {
     await hero.waitForMillis(400);
-    await hero.waitForPaintingStable();
+    await waitPaintingStableLenient(hero, maxWaitMs);
     return clickNextForRegionStep(hero);
   }
 
@@ -234,7 +302,7 @@ async function selectRegionAndClickNext(hero, region, maxWaitMs) {
   }
 
   await hero.waitForMillis(400);
-  await hero.waitForPaintingStable();
+  await waitPaintingStableLenient(hero, maxWaitMs);
   return clickNextForRegionStep(hero);
 }
 
@@ -325,6 +393,7 @@ async function submitIdentifierStep(hero, userEl) {
 
 async function tryClickLogIn(hero) {
   if (await tryClickExactLabel(hero, "Log In")) return true;
+  if (await tryClickExactLabel(hero, "Sign In")) return true;
   const hints = [
     'input[type="submit"][value="Log In"]',
     'input[type="button"][value="Log In"]',
@@ -342,12 +411,64 @@ async function tryClickLogIn(hero) {
   }
 }
 
+async function findVisibleUsernameField(hero) {
+  let el = await firstVisibleMatchAllFrames(hero, USERNAME_SELECTORS);
+  if (el) return el;
+  el = await firstVisibleXPathInFrames(hero, XPATH_OAUTH_USERNAME_SEMANTIC);
+  if (el) return el;
+  el = await firstVisibleXPathInFrames(hero, "//input[@type='email']");
+  if (el) return el;
+  el = await firstVisibleXPathInFrames(
+    hero,
+    "//form//input[(@type='text' or @type='tel' or not(@type)) and not(@type='hidden') and not(@type='password')][1]",
+  );
+  return el;
+}
+
 async function waitForUsernameField(hero, maxWaitMs) {
   const deadline = Date.now() + maxWaitMs;
   while (Date.now() < deadline) {
-    const el = await firstVisibleMatchAllFrames(hero, USERNAME_SELECTORS);
+    const el = await findVisibleUsernameField(hero);
     if (el) return el;
     await hero.waitForMillis(400);
+  }
+  return await tryWaitFirstMatchingInput(
+    hero,
+    XPATH_EMAIL_FIELD_WAIT,
+    Math.min(20_000, Math.max(8000, maxWaitMs)),
+  );
+}
+
+async function waitForAttachedUsernameToShow(hero, timeoutMs) {
+  const frames = await hero.frameEnvironments;
+  for (const frame of frames) {
+    for (const sel of USERNAME_SELECTORS) {
+      try {
+        const nl = await frame.document.querySelectorAll(sel);
+        const len = await nl.length;
+        for (let i = 0; i < len; i++) {
+          const el = await nl[i];
+          if (!el) continue;
+          const ready = await hero.waitForElement(el, {
+            waitForVisible: true,
+            waitForClickable: false,
+            timeoutMs,
+          });
+          if (ready) return ready;
+        }
+      } catch {}
+    }
+    try {
+      const nodes = await frame.xpathSelectorAll(XPATH_OAUTH_USERNAME_SEMANTIC);
+      for (const el of nodes) {
+        const ready = await hero.waitForElement(el, {
+          waitForVisible: true,
+          waitForClickable: false,
+          timeoutMs,
+        });
+        if (ready) return ready;
+      }
+    } catch {}
   }
   return null;
 }
@@ -375,15 +496,18 @@ export async function runLoginFlow(hero, options) {
     baseUrl = BASE_URL,
   } = options;
 
-  await hero.goto(baseUrl, { timeoutMs: Math.max(timeoutMs, 120_000) });
-  await hero.waitForPaintingStable();
-  await hero.waitForMillis(800);
+  await hero.goto(baseUrl, { timeoutMs: Math.max(timeoutMs, 180_000) });
+  await waitPaintingStableLenient(hero, timeoutMs);
+  await hero.waitForMillis(2000);
 
-  let userEl = await waitForUsernameField(hero, 20_000);
+  let userEl = await waitForUsernameField(hero, 35_000);
   if (!userEl) {
     console.log("emresource-screencap: trying Log In to reveal form…");
     await tryClickLogIn(hero);
-    userEl = await waitForUsernameField(hero, 25_000);
+    userEl = await waitForUsernameField(hero, 40_000);
+  }
+  if (!userEl) {
+    userEl = await waitForAttachedUsernameToShow(hero, 25_000);
   }
   if (!userEl) {
     throw new Error(
@@ -397,7 +521,7 @@ export async function runLoginFlow(hero, options) {
 
   await submitIdentifierStep(hero, userEl);
   await hero.waitForMillis(2500);
-  await hero.waitForPaintingStable();
+  await waitPaintingStableLenient(hero, timeoutMs);
 
   let passEl = await firstVisibleMatchAllFrames(hero, PASSWORD_SELECTORS);
   if (!passEl) {
