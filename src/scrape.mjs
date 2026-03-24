@@ -46,7 +46,7 @@ export async function runScrape(options) {
   try {
     hero = new Hero({
       showChrome: headed,
-      showChromeInteractions: headed,
+      showChromeInteractions: false,
       viewport: resolveViewport(),
     });
     await runLoginFlow(hero, {
