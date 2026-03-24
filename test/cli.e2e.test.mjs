@@ -8,6 +8,7 @@ import { test } from "node:test";
 const execFileAsync = promisify(execFile);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const cli = join(root, "cli.mjs");
+const daemon = join(root, "daemon.mjs");
 
 function runCli(args, { withoutCredentials = false, env = {} } = {}) {
   const merged = { ...process.env };
@@ -19,6 +20,13 @@ function runCli(args, { withoutCredentials = false, env = {} } = {}) {
   return execFileAsync(process.execPath, [cli, ...args], {
     cwd: root,
     env: merged,
+  });
+}
+
+function runDaemon(args, env = {}) {
+  return execFileAsync(process.execPath, [daemon, ...args], {
+    cwd: root,
+    env: { ...process.env, ...env },
   });
 }
 
@@ -45,6 +53,13 @@ test("cli without credentials exits 1 and mentions env", async () => {
       return true;
     },
   );
+});
+
+test("daemon --help exits 0", async () => {
+  const { stdout, stderr } = await runDaemon(["--help"]);
+  assert.equal(stderr, "");
+  assert.match(stdout, /emresource-screencap-daemon/);
+  assert.match(stdout, /interval-ms/);
 });
 
 test("cli without username exits 1", async () => {

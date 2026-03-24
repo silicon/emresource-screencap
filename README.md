@@ -37,6 +37,8 @@ Set credentials in the environment (never commit them):
 | `EMRESOURCE_PASSWORD` | Yes | Account password |
 | `EMRESOURCE_VIEWPORT` | No | Browser viewport `WIDTHxHEIGHT` (e.g. `2560x1440`). Default is `1920x1200`. |
 | `EMRESOURCE_BASE_URL` | No | Override the login URL (defaults to production). Used by tests and scripts; programmatic `runScrape({ baseUrl })` wins over this env var when set. |
+| `EMRESOURCE_TARGET_URL` | No | First navigation when using **session reuse** (default: same as base URL). Point at a post-login page (for example a specific `/App/...` URL) so a warm browser can skip the full Okta flow when cookies are still valid. |
+| `EMRESOURCE_SESSION_DIR` | No | If set, passed to Hero as **`sessionDbDirectory`** with **`sessionPersistence`** so session data can persist on disk (optional; see Ulixee docs for your engine version). |
 | `CHROME_139_BIN` | No | Absolute path to a Chrome/Chromium **139.x** binary when the bundled engine from `@ulixee/chrome-139-0` is missing or will not run (common on **Linux arm64**). Use a path in a **writable** directory (e.g. `~/.local/bin/...` via symlink); not `/usr/bin/...` (see Install note above). |
 
 ## Testing
@@ -85,6 +87,23 @@ Useful flags (see `node cli.mjs --help`):
 - `--require-region` — exit with an error if no region control appears within the timeout
 - `--skip-region` — do not wait for region selection
 - `--timeout-ms` — default timeout for Hero interactions and painting-stable waits (default: `60000`). Use a higher value (e.g. `120000`) on slow networks or if you see `Timeout waiting for navigation "PaintingStable"`.
+- `--no-session-reuse` — skip the **warm navigation** step and always run the full login flow (see Session reuse below).
+
+### Daemon (one browser, repeated screenshots)
+
+For slow machines, starting Chromium once and reusing it avoids repeated cold boots:
+
+```bash
+npm run daemon -- --headed --interval-ms 120000 -o dashboard.png
+```
+
+Or: `node daemon.mjs --once -o snap.png` for a single job with the same process model (browser stays open until exit). **`SIGINT` / `SIGTERM`** closes the browser.
+
+- **`--interval-ms`** — delay after each successful capture before the next job (default `60000`).
+- **`--once`** — run one job then exit (still uses one long-lived `Hero` for that job only).
+- **`--no-session-reuse`** — same as the main CLI; always full login.
+
+Session reuse (default): each job first does `goto(EMRESOURCE_TARGET_URL or base URL)`. If the page still looks like a login step (Okta/Juvare URL patterns or a visible identifier field), the tool runs **`runLoginFlow`** as before. Otherwise it skips login and proceeds to the screenshot.
 
 ### hCaptcha / CAPTCHA
 
@@ -95,7 +114,7 @@ Okta/Juvare may show a **human verification** step. This tool does not and canno
 1. **`--headed`** — Open a real browser window so you can complete the challenge yourself. Increase **`--timeout-ms`** (e.g. `300000`) so the run does not exit while you work.
 2. **Run from an environment similar to normal use** — Very locked-down or “datacenter” networks sometimes see challenges more often. Same VPN or office network as interactive login can help; there are no guarantees.
 3. **Ask your organization** — IT may offer **SSO**, **device trust**, or a **staging** tenant with relaxed checks for automation. Juvare may document supported integration paths.
-4. **Session reuse (if policy allows)** — After a manual login in a normal browser, some teams export cookies into a profile Hero can load; that is not implemented here and must match your security rules.
+4. **Session reuse (if policy allows)** — This project can **reuse an in-process Hero session** (daemon loop) or optional **`EMRESOURCE_SESSION_DIR`** persistence. Heuristics may mis-detect; use **`--no-session-reuse`** when you need a deterministic full login. Must align with EMResource / org policy.
 
 Third-party “CAPTCHA solving” services are a poor fit for production credentials and often violate terms of use.
 

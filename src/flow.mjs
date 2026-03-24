@@ -8,7 +8,7 @@ import {
   USERNAME_SELECTORS,
 } from "./constants.mjs";
 
-async function waitPaintingStableLenient(hero, budgetMs) {
+export async function waitPaintingStableLenient(hero, budgetMs) {
   const ms = Math.min(Math.max(20_000, budgetMs), 180_000);
   try {
     await hero.waitForPaintingStable({ timeoutMs: ms });
@@ -423,6 +423,25 @@ async function findVisibleUsernameField(hero) {
     "//form//input[(@type='text' or @type='tel' or not(@type)) and not(@type='hidden') and not(@type='password')][1]",
   );
   return el;
+}
+
+const LOGIN_FLOW_URL_HINT =
+  /login\.juvare\.com|oauth2\/v1\/authorize|\/signin\/|okta\.com\/oauth2/i;
+
+export async function needsFullLogin(hero) {
+  let url = "";
+  try {
+    url = await hero.url;
+  } catch {
+    return true;
+  }
+  if (!url) return true;
+  if (LOGIN_FLOW_URL_HINT.test(url)) return true;
+  if (/emresource\.juvare\.com/i.test(url) && /\/login(\/|$|\?)/i.test(url)) {
+    return true;
+  }
+  const userEl = await findVisibleUsernameField(hero);
+  return userEl != null;
 }
 
 async function waitForUsernameField(hero, maxWaitMs) {

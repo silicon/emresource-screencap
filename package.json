@@ -5,11 +5,13 @@
   "description": "EMResource login and full-page screenshot via Ulixee Hero",
   "type": "module",
   "bin": {
-    "emresource-screencap": "./cli.mjs"
+    "emresource-screencap": "./cli.mjs",
+    "emresource-screencap-daemon": "./daemon.mjs"
   },
   "scripts": {
     "start": "node cli.mjs",
-    "test": "node --test test/cli.e2e.test.mjs test/scrapeOptions.test.mjs",
+    "daemon": "node daemon.mjs",
+    "test": "node --test test/cli.e2e.test.mjs test/scrape.boot.test.mjs test/scrapeOptions.test.mjs",
     "test:e2e": "node --test test/hero.flow.test.mjs"
   },
   "engines": {
